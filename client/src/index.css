@@ -1,0 +1,190 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 3.7%, 15.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+
+  /* ChittyChain specific colors */
+  --chitty-black: hsl(0, 0%, 3.9%);
+  --chitty-dark: hsl(0, 0%, 10.2%);
+  --chitty-card: hsl(0, 0%, 16.5%);
+  --chitty-blue: hsl(207, 90%, 54%);
+  --chitty-border: hsl(220, 13%, 28%);
+}
+
+.light {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-chitty-black text-white;
+    font-family: 'Inter', sans-serif;
+  }
+
+  html {
+    @apply dark;
+  }
+}
+
+@layer components {
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(74, 144, 226, 0.3);
+  }
+
+  .pulse-dot {
+    animation: pulse 2s infinite;
+  }
+
+  .blockchain-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgba(74, 144, 226, 0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--chitty-dark);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--chitty-border);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--chitty-blue);
+  }
+
+  /* ChittyChain specific utilities */
+  .bg-chitty-black {
+    background-color: var(--chitty-black);
+  }
+
+  .bg-chitty-dark {
+    background-color: var(--chitty-dark);
+  }
+
+  .bg-chitty-card {
+    background-color: var(--chitty-card);
+  }
+
+  .text-chitty-blue {
+    color: var(--chitty-blue);
+  }
+
+  .border-chitty-border {
+    border-color: var(--chitty-border);
+  }
+
+  .hover\:border-chitty-blue:hover {
+    border-color: var(--chitty-blue);
+  }
+
+  .hover\:bg-chitty-card:hover {
+    background-color: var(--chitty-card);
+  }
+
+  /* Animation keyframes */
+  @keyframes pulse {
+    0%, 100% { 
+      opacity: 1; 
+    }
+    50% { 
+      opacity: 0.5; 
+    }
+  }
+
+  .animate-pulse-dot {
+    animation: pulse 2s infinite;
+  }
+
+  /* Status indicators */
+  .status-active {
+    @apply bg-green-500 bg-opacity-20 text-green-400;
+  }
+
+  .status-pending {
+    @apply bg-yellow-500 bg-opacity-20 text-yellow-400;
+  }
+
+  .status-error {
+    @apply bg-red-500 bg-opacity-20 text-red-400;
+  }
+
+  .status-deploying {
+    @apply bg-blue-500 bg-opacity-20 text-blue-400;
+  }
+
+  /* Transaction type icons */
+  .tx-evidence {
+    @apply bg-chitty-blue text-white;
+  }
+
+  .tx-property {
+    @apply bg-purple-500 text-white;
+  }
+
+  .tx-case {
+    @apply bg-yellow-500 text-white;
+  }
+
+  .tx-audit {
+    @apply bg-green-500 text-white;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
