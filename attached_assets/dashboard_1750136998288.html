@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ChittyChain Audit Dashboard</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; padding: 2rem; }
+    .stat { background: #f5f5f5; padding: 1rem; margin: 1rem 0; border-radius: 8px; }
+    .hash { font-family: monospace; font-size: 0.9em; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>⛓️ ChittyChain™ Audit Dashboard</h1>
+  
+  <div class="stat">
+    <h2>Consolidation Progress</h2>
+    <p>Original Repos: 48</p>
+    <p>Target Repos: 12</p>
+    <p>Capabilities Tracked: <span id="cap-count">0</span></p>
+    <p>On-Chain Proofs: <span id="proof-count">0</span></p>
+  </div>
+  
+  <div class="stat">
+    <h2>Latest Migrations</h2>
+    <div id="migrations"></div>
+  </div>
+  
+  <div class="stat">
+    <h2>Domain Verifications</h2>
+    <div id="domains"></div>
+  </div>
+  
+  <script>
+    // Real-time updates via WebSocket
+    const ws = new WebSocket('ws://localhost:8546');
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'capability') {
+        document.getElementById('cap-count').textContent = data.count;
+        
+        const migration = document.createElement('div');
+        migration.innerHTML = \`
+          <p>\${data.source} → \${data.target}</p>
+          <p class="hash">Hash: \${data.hash}</p>
+        \`;
+        document.getElementById('migrations').prepend(migration);
+      }
+    };
+  </script>
+</body>
+</html>
