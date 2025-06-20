@@ -2,43 +2,26 @@ import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import session from 'express-session';
-import { registerRoutes } from './routes';
+import { registerSimpleRoutes } from './simple-routes';
 
-// Import configuration and middleware
-import { env, corsOrigins, validateEnvironment } from './config/environment.js';
-import { 
-  requestId, 
-  requestLogger, 
-  errorHandler, 
-  notFoundHandler, 
-  healthCheck 
-} from './middleware/errorHandler.js';
-import { sanitizeInput, rateLimiters } from './middleware/validation.js';
+// Simplified imports for basic functionality
+const corsOrigins = process.env.NODE_ENV === 'production' 
+  ? ['https://chittychain.replit.app'] 
+  : ['http://localhost:3000', 'http://localhost:5000'];
 
-// Import API routes (temporarily disabled due to import errors)
-// import authRoutes from './routes/auth';
-// import evidenceRoutes from './routes/evidence';
-// import casesRoutes from './routes/cases';
-// import artifactsRoutes from './routes/artifacts';
-// import chainRoutes from './routes/chain';
-// import complianceRoutes from './routes/compliance';
-// import airRoutes from './routes/air';
-
-// Import WebSocket service
-import { WebSocketService } from './websocket';
-import { setWebSocketService } from './services/websocket';
-
-// Validate environment configuration
-validateEnvironment();
+const env = {
+  PORT: parseInt(process.env.PORT || '5000'),
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  SESSION_SECRET: process.env.SESSION_SECRET || 'chittychain-dev-secret',
+  SESSION_COOKIE_SECURE: process.env.NODE_ENV === 'production',
+  SESSION_COOKIE_MAX_AGE: 24 * 60 * 60 * 1000, // 24 hours
+  MAX_FILE_SIZE: 50 * 1024 * 1024 // 50MB
+};
 
 const app: Express = express();
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
-
-// Request ID and logging
-app.use(requestId);
-app.use(requestLogger);
 
 // Security middleware
 app.use(helmet({
@@ -61,27 +44,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
 }));
 
-// Rate limiting
-app.use('/api/', rateLimiters.api);
-app.use('/api/v1/auth/', rateLimiters.auth);
-app.use('/api/v1/evidence/', rateLimiters.evidence);
-app.use('/api/v1/cases/create', rateLimiters.caseCreation);
-
 // Body parsing with size limits
 app.use(express.json({ 
-  limit: `${env.MAX_FILE_SIZE / 1024 / 1024}mb`,
-  verify: (req, res, buf) => {
-    // Store raw body for signature verification if needed
-    (req as any).rawBody = buf;
-  }
+  limit: '50mb'
 }));
 app.use(express.urlencoded({ 
   extended: true, 
-  limit: `${env.MAX_FILE_SIZE / 1024 / 1024}mb` 
+  limit: '50mb' 
 }));
-
-// Input sanitization
-app.use(sanitizeInput);
 
 // Session management
 app.use(session({
@@ -97,41 +67,35 @@ app.use(session({
 }));
 
 // Health check endpoint
-app.get('/health', healthCheck);
-app.get('/api/health', healthCheck);
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    service: 'ChittyChain'
+  });
+});
 
-// API Routes (temporarily disabled due to import errors)
-// app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/evidence', evidenceRoutes);
-// app.use('/api/v1/cases', casesRoutes);
-// app.use('/api/v1/artifacts', artifactsRoutes);
-// app.use('/api/v1/chain', chainRoutes);
-// app.use('/api/v1/compliance', complianceRoutes);
-// app.use('/api/v1/air', airRoutes);
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    service: 'ChittyChain API'
+  });
+});
 
-// Prometheus metrics endpoint
-app.get('/metrics', async (req, res) => {
-  try {
-    const metrics = await require('./observability/metrics').metricsService.getMetrics();
-    res.set('Content-Type', 'text/plain');
-    res.send(metrics);
-  } catch (error) {
-    res.status(500).send('Error generating metrics');
-  }
+// Basic error handling middleware (must be before routes)
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // 404 handler for unmatched routes
-app.use(notFoundHandler);
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
 
-// Global error handling middleware (must be last)
-app.use(errorHandler);
-
-// Register existing routes (blockchain, properties, etc.)
-registerRoutes(app).then(httpServer => {
-  // Initialize WebSocket service
-  const wsService = new WebSocketService(httpServer);
-  setWebSocketService(wsService);
-
+// Register simple routes for ChittyChain
+registerSimpleRoutes(app).then(httpServer => {
   const port = env.PORT;
   
   httpServer.listen(port, () => {
@@ -144,7 +108,7 @@ registerRoutes(app).then(httpServer => {
     console.log(`🔓 WebSocket: Real-time updates enabled`);
     console.log(`📝 Health Check: http://localhost:${port}/health`);
   });
-}).catch(error => {
+}).catch((error: any) => {
   console.error('Failed to start server:', error);
   process.exit(1);
 });

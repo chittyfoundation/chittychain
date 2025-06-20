@@ -234,7 +234,7 @@ export class MemStorage implements IStorage {
     const fullEvidence: EvidenceRecord = {
       ...evidence,
       id,
-      createdAt: new Date(),
+      submittedAt: new Date(),
     };
     this.evidence.set(id, fullEvidence);
     return fullEvidence;
