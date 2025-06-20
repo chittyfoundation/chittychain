@@ -1,9 +1,19 @@
 import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import { registerRoutes } from './routes';
+
+// Import configuration and middleware
+import { env, corsOrigins, validateEnvironment } from './config/environment.js';
+import { 
+  requestId, 
+  requestLogger, 
+  errorHandler, 
+  notFoundHandler, 
+  healthCheck 
+} from './middleware/errorHandler.js';
+import { sanitizeInput, rateLimiters } from './middleware/validation.js';
 
 // Import API routes
 import authRoutes from './routes/auth';
@@ -11,8 +21,24 @@ import evidenceRoutes from './routes/evidence';
 import casesRoutes from './routes/cases';
 import artifactsRoutes from './routes/artifacts';
 import chainRoutes from './routes/chain';
+import complianceRoutes from './routes/compliance';
+import airRoutes from './routes/air';
+
+// Import WebSocket service
+import { WebSocketService } from './websocket';
+import { setWebSocketService } from './services/websocket';
+
+// Validate environment configuration
+validateEnvironment();
 
 const app: Express = express();
+
+// Trust proxy for accurate IP addresses
+app.set('trust proxy', 1);
+
+// Request ID and logging
+app.use(requestId);
+app.use(requestLogger);
 
 // Security middleware
 app.use(helmet({
@@ -29,52 +55,50 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5000',
+  origin: corsOrigins,
   credentials: true,
-}));
-
-// Body parsing
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb' }));
-
-// Session management
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'chittychain-session-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
 }));
 
 // Rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-});
+app.use('/api/', rateLimiters.api);
+app.use('/api/v1/auth/', rateLimiters.auth);
+app.use('/api/v1/evidence/', rateLimiters.evidence);
+app.use('/api/v1/cases/create', rateLimiters.caseCreation);
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit auth attempts
-  message: 'Too many authentication attempts, please try again later.',
-  skipSuccessfulRequests: true,
-});
+// Body parsing with size limits
+app.use(express.json({ 
+  limit: `${env.MAX_FILE_SIZE / 1024 / 1024}mb`,
+  verify: (req, res, buf) => {
+    // Store raw body for signature verification if needed
+    (req as any).rawBody = buf;
+  }
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: `${env.MAX_FILE_SIZE / 1024 / 1024}mb` 
+}));
 
-const evidenceLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 100, // Limit evidence submissions
-  message: 'Evidence submission rate limit exceeded.',
-});
+// Input sanitization
+app.use(sanitizeInput);
 
-// Apply rate limiters
-app.use('/api/', apiLimiter);
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/register', authLimiter);
-app.use('/api/v1/evidence/submit', evidenceLimiter);
-app.use('/api/v1/evidence/batch', evidenceLimiter);
+// Session management
+app.use(session({
+  secret: env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: env.SESSION_COOKIE_SECURE,
+    httpOnly: true,
+    maxAge: env.SESSION_COOKIE_MAX_AGE,
+    sameSite: 'strict',
+  },
+}));
+
+// Health check endpoint
+app.get('/health', healthCheck);
+app.get('/api/health', healthCheck);
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
@@ -82,48 +106,45 @@ app.use('/api/v1/evidence', evidenceRoutes);
 app.use('/api/v1/cases', casesRoutes);
 app.use('/api/v1/artifacts', artifactsRoutes);
 app.use('/api/v1/chain', chainRoutes);
+app.use('/api/v1/compliance', complianceRoutes);
+app.use('/api/v1/air', airRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    service: 'ChittyChain Cloud Server',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-  });
+// Prometheus metrics endpoint
+app.get('/metrics', async (req, res) => {
+  try {
+    const metrics = await require('./observability/metrics').metricsService.getMetrics();
+    res.set('Content-Type', 'text/plain');
+    res.send(metrics);
+  } catch (error) {
+    res.status(500).send('Error generating metrics');
+  }
 });
 
 // Register existing routes (blockchain, properties, etc.)
 const httpServer = await registerRoutes(app);
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
-  
-  if (err.name === 'MulterError') {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File size too large' });
-    }
-    return res.status(400).json({ error: err.message });
-  }
-  
-  if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({ error: 'Invalid JSON' });
-  }
-  
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
-});
+// Initialize WebSocket service
+const wsService = new WebSocketService(httpServer);
+setWebSocketService(wsService);
 
-const port = process.env.PORT || 5000;
+// Export WebSocket service for use in routes
+export { wsService };
+
+// 404 handler for unmatched routes
+app.use(notFoundHandler);
+
+// Global error handling middleware (must be last)
+app.use(errorHandler);
+
+const port = env.PORT;
 
 httpServer.listen(port, () => {
-  console.log(`ChittyChain Cloud Server running on port ${port}`);
-  console.log(`API Version: v1`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Blockchain: ChittyChain initialized`);
-  console.log(`Security: JWT + 2FA enabled`);
-  console.log(`Compliance: Illinois Court Rules active`);
+  console.log(`🚀 ChittyChain Cloud Server running on port ${port}`);
+  console.log(`📊 API Version: v1`);
+  console.log(`🌍 Environment: ${env.NODE_ENV}`);
+  console.log(`⛓️  Blockchain: ChittyChain initialized`);
+  console.log(`🔐 Security: JWT + 2FA enabled`);
+  console.log(`⚖️  Compliance: Cook County Rules active`);
+  console.log(`🔓 WebSocket: Real-time updates enabled`);
+  console.log(`📝 Health Check: http://localhost:${port}/health`);
 });

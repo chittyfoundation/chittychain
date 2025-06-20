@@ -2,9 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import speakeasy from 'speakeasy';
 import { Request, Response, NextFunction } from 'express';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'chittychain-secret-key-change-in-production';
-const JWT_EXPIRY = '24h';
+import { env, jwtConfig } from '../config/environment.js';
+import { storage } from '../storage.js';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -23,14 +22,13 @@ export const generateToken = (user: any): string => {
       role: user.role,
       caseAccess: user.caseAccess || []
     },
-    JWT_SECRET,
-    { expiresIn: JWT_EXPIRY }
+    jwtConfig.secret,
+    { expiresIn: jwtConfig.expiresIn }
   );
 };
 
 export const hashPassword = async (password: string): Promise<string> => {
-  const saltRounds = 10;
-  return bcrypt.hash(password, saltRounds);
+  return bcrypt.hash(password, env.HASH_SALT_ROUNDS);
 };
 
 export const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
@@ -67,7 +65,7 @@ export const authenticateToken = async (
       return;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, jwtConfig.secret) as any;
     req.user = decoded;
     next();
   } catch (error) {
@@ -96,24 +94,66 @@ export const requireCaseAccess = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const caseId = req.params.case_id || req.body.caseId;
-  
-  if (!caseId) {
-    res.status(400).json({ error: 'Case ID required' });
-    return;
-  }
+  try {
+    const caseId = req.params.case_id || req.body.caseId;
+    
+    if (!caseId) {
+      res.status(400).json({ error: 'Case ID required' });
+      return;
+    }
 
-  if (!req.user) {
-    res.status(401).json({ error: 'Authentication required' });
-    return;
-  }
+    if (!req.user) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
 
-  if (!req.user.caseAccess.includes(caseId) && req.user.role !== 'COURT_OFFICER') {
-    res.status(403).json({ error: 'No access to this case' });
-    return;
-  }
+    // Court officers have access to all cases
+    if (req.user.role === 'COURT_OFFICER' || req.user.role === 'JUDGE') {
+      next();
+      return;
+    }
 
-  next();
+    // Check if user has access to this specific case
+    const legalCase = await storage.getCase(caseId);
+    if (!legalCase) {
+      res.status(404).json({ error: 'Case not found' });
+      return;
+    }
+
+    // Check if user is a party to the case or their attorney
+    const user = await storage.getUser(parseInt(req.user.id));
+    if (!user) {
+      res.status(401).json({ error: 'User not found' });
+      return;
+    }
+
+    const hasAccess = 
+      legalCase.petitioner === user.registrationNumber ||
+      legalCase.respondent === user.registrationNumber ||
+      legalCase.createdBy === user.registrationNumber ||
+      req.user.caseAccess.includes(caseId);
+
+    if (!hasAccess) {
+      // Log access attempt for audit
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: 'UNAUTHORIZED_CASE_ACCESS_ATTEMPT',
+        resourceType: 'CASE',
+        resourceId: caseId,
+        details: { userRole: req.user.role, registrationNumber: req.user.registrationNumber },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || 'unknown',
+      });
+      
+      res.status(403).json({ error: 'No access to this case' });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error('Case access verification error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 export const validateRegistrationNumber = (regNumber: string): boolean => {

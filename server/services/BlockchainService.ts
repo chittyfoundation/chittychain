@@ -1,5 +1,6 @@
 import { ChittyChain } from '../blockchain/ChittyChain.js';
 import { EventEmitter } from 'events';
+import { getWebSocketService } from './websocket';
 
 export class BlockchainService extends EventEmitter {
   private chittyChain: ChittyChain;
@@ -15,14 +16,51 @@ export class BlockchainService extends EventEmitter {
     // Set up event listeners for the blockchain
     this.chittyChain.on('blockAdded', (block) => {
       this.emit('newBlock', block);
+      
+      // Emit WebSocket event
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.emitBlockchainUpdate('block_added', {
+          blockNumber: block.index,
+          hash: block.hash,
+          previousHash: block.previousHash,
+          timestamp: block.timestamp,
+          transactionCount: block.transactions.length
+        });
+      }
     });
 
     this.chittyChain.on('transactionAdded', (transaction) => {
       this.emit('newTransaction', transaction);
+      
+      // Emit WebSocket event
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.emitBlockchainUpdate('transaction_added', {
+          txHash: transaction.hash,
+          from: transaction.from,
+          to: transaction.to,
+          type: transaction.type,
+          timestamp: transaction.timestamp
+        });
+      }
     });
 
     this.chittyChain.on('blockMined', (block) => {
       this.emit('blockMined', block);
+      
+      // Emit WebSocket event
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.emitBlockchainUpdate('block_mined', {
+          blockNumber: block.index,
+          hash: block.hash,
+          miner: block.miner,
+          difficulty: block.difficulty,
+          nonce: block.nonce,
+          transactionCount: block.transactions.length
+        });
+      }
     });
 
     this.isInitialized = true;

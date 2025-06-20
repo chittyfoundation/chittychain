@@ -51,6 +51,13 @@ export default {
           "4": "var(--chart-4)",
           "5": "var(--chart-5)",
         },
+        chitty: {
+          black: "var(--chitty-black)",
+          dark: "var(--chitty-dark)",
+          card: "var(--chitty-card)",
+          blue: "var(--chitty-blue)",
+          border: "var(--chitty-border)",
+        },
         sidebar: {
           DEFAULT: "var(--sidebar-background)",
           foreground: "var(--sidebar-foreground)",

@@ -1,0 +1,262 @@
+/* ChittyChain Luxury Design System */
+
+:root {
+  /* Premium Color Palette */
+  --chitty-gold: #D4AF37;
+  --chitty-gold-light: #F4E5B9;
+  --chitty-gold-dark: #B8941F;
+  
+  --chitty-black: #0A0A0A;
+  --chitty-charcoal: #1A1A1A;
+  --chitty-slate: #2D2D2D;
+  
+  --chitty-pearl: #FAFAFA;
+  --chitty-silver: #E5E5E5;
+  --chitty-platinum: #C0C0C0;
+  
+  /* Accent Colors */
+  --chitty-cobalt: #0047AB;
+  --chitty-emerald: #046A38;
+  --chitty-ruby: #9B111E;
+  
+  /* Typography Scale */
+  --font-serif: 'Crimson Pro', 'Garamond', 'Georgia', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  
+  /* Spacing Rhythm (8pt grid) */
+  --space-0: 0;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 2.5rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+  --space-10: 5rem;
+  --space-12: 6rem;
+  --space-16: 8rem;
+  
+  /* Premium Shadows */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-luxury: 0 12px 48px rgba(0, 0, 0, 0.15);
+  --shadow-glow-gold: 0 0 40px rgba(212, 175, 55, 0.2);
+  
+  /* Animation Timing */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-luxury: 500ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Typography Classes */
+.text-luxury-serif {
+  font-family: var(--font-serif);
+  letter-spacing: 0.01em;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+.text-luxury-display {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Premium Gradients */
+.gradient-luxury-gold {
+  background: linear-gradient(135deg, var(--chitty-gold-light) 0%, var(--chitty-gold) 50%, var(--chitty-gold-dark) 100%);
+}
+
+.gradient-luxury-dark {
+  background: linear-gradient(180deg, var(--chitty-black) 0%, var(--chitty-charcoal) 100%);
+}
+
+.gradient-luxury-subtle {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.02) 100%);
+}
+
+/* Glass Morphism Effects */
+.glass-luxury {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.glass-luxury-light {
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+/* Premium Hover States */
+.hover-luxury {
+  transition: all var(--transition-luxury);
+}
+
+.hover-luxury:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-luxury);
+}
+
+/* Luxury Button Styles */
+.btn-luxury {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.btn-luxury::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-luxury);
+}
+
+.btn-luxury:hover::before {
+  left: 100%;
+}
+
+/* Premium Loading States */
+.shimmer-luxury {
+  background: linear-gradient(
+    90deg,
+    var(--chitty-slate) 0%,
+    rgba(212, 175, 55, 0.1) 50%,
+    var(--chitty-slate) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-luxury 2s ease-in-out infinite;
+}
+
+@keyframes shimmer-luxury {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Skeleton Loading */
+.skeleton-luxury {
+  position: relative;
+  overflow: hidden;
+  background: var(--chitty-slate);
+}
+
+.skeleton-luxury::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 175, 55, 0.05),
+    transparent
+  );
+  animation: skeleton-luxury 2s infinite;
+}
+
+@keyframes skeleton-luxury {
+  100% { transform: translateX(100%); }
+}
+
+/* Premium Focus States */
+.focus-luxury:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--chitty-black), 0 0 0 4px var(--chitty-gold);
+}
+
+.focus-luxury-subtle:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--chitty-gold);
+}
+
+/* Luxury Card Styles */
+.card-luxury {
+  background: var(--chitty-charcoal);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  box-shadow: var(--shadow-soft);
+  transition: all var(--transition-luxury);
+}
+
+.card-luxury:hover {
+  border-color: rgba(212, 175, 55, 0.2);
+  box-shadow: var(--shadow-luxury), var(--shadow-glow-gold);
+  transform: translateY(-2px);
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--chitty-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--chitty-slate);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--chitty-gold-dark);
+}
+
+/* Luxury Animations */
+@keyframes float-luxury {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-luxury {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-float-luxury {
+  animation: float-luxury 3s ease-in-out infinite;
+}
+
+.animate-pulse-luxury {
+  animation: pulse-luxury 2s ease-in-out infinite;
+}
+
+/* Premium Utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+.luxury-shadow {
+  box-shadow: 
+    0 1px 1px rgba(0, 0, 0, 0.05),
+    0 2px 2px rgba(0, 0, 0, 0.05),
+    0 4px 4px rgba(0, 0, 0, 0.05),
+    0 8px 8px rgba(0, 0, 0, 0.05),
+    0 16px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Luxury Spacing */
+@media (min-width: 768px) {
+  .luxury-padding {
+    padding: var(--space-8);
+  }
+}
+
+@media (max-width: 767px) {
+  .luxury-padding {
+    padding: var(--space-4);
+  }
+}

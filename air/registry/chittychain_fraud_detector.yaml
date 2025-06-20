@@ -1,0 +1,35 @@
+id: chittychain-fraud-detector
+name: ChittyChain Fraud Detection Agent
+owner: security@chittychain.com
+status: active
+risk_level: high
+capabilities:
+  - transaction_analysis
+  - pattern_recognition
+  - risk_scoring
+  - automated_blocking
+  - data_modification
+human_override: true
+compliance_frameworks:
+  - SOC2
+  - PCI DSS
+  - GDPR
+deployment_environment: production
+data_access_level: confidential
+last_evaluation: null
+notes: |
+  AI agent responsible for real-time fraud detection and transaction monitoring.
+  Handles sensitive financial data and has blocking capabilities.
+  Requires regular evaluation due to high risk level and production deployment.
+  
+  Capabilities include:
+  - Real-time transaction risk scoring
+  - Pattern matching against known fraud signatures
+  - Automated transaction blocking (with human override)
+  - Customer behavior analysis
+  
+  Security measures:
+  - All actions logged and auditable
+  - Human override required for high-value transactions
+  - Regular bias testing to ensure fair treatment
+  - Encrypted communication with external systems

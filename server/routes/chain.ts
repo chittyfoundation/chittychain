@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { BlockchainService } from '../services/BlockchainService';
-import { db } from '../storage';
-import { evidence } from '@shared/schema';
+import { db, evidence } from '../db';
 import { eq } from 'drizzle-orm';
 
 const router = Router();

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import qrcode from 'qrcode';
-import { db } from '../storage';
-import { users } from '@shared/schema';
+import { db, users } from '../db';
 import { eq } from 'drizzle-orm';
 import {
   generateToken,
@@ -13,8 +12,12 @@ import {
   authenticateToken,
   AuthRequest
 } from '../middleware/auth';
+import claudeCodeRoutes from './auth/claudeCode';
 
 const router = Router();
+
+// Mount Claude Code authentication routes
+router.use('/claude', claudeCodeRoutes);
 
 // User registration with 2FA setup
 router.post('/register', async (req, res) => {

@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import multer from 'multer';
 import crypto from 'crypto';
-import { db } from '../storage';
-import { evidence, audit_logs } from '@shared/schema';
+import { db, evidence, audit_logs } from '../db';
 import { eq, and, desc } from 'drizzle-orm';
 import { authenticateToken, requireCaseAccess, AuthRequest } from '../middleware/auth';
 import { BlockchainService } from '../services/BlockchainService';
 import { EvidenceService } from '../services/EvidenceService';
+import { ipfsService } from '../services/ipfs';
+import { getWebSocketService } from '../services/websocket';
 
 const router = Router();
 const blockchainService = new BlockchainService();
@@ -106,6 +107,28 @@ router.post('/submit', authenticateToken, requireCaseAccess, upload.single('file
       userAgent: req.get('user-agent') || 'unknown'
     });
 
+    // Emit WebSocket events
+    const wsService = getWebSocketService();
+    if (wsService) {
+      // Emit to case subscribers
+      wsService.emitCaseUpdate(caseId, 'evidence_submitted', {
+        evidenceId: dbEvidence.id,
+        artifactId: dbEvidence.artifactId,
+        documentType,
+        submittedBy: req.user!.email,
+        submittedAt: dbEvidence.submittedAt
+      });
+
+      // Emit to evidence live feed
+      wsService.emitEvidenceUpdate('new_submission', {
+        caseId,
+        evidenceId: dbEvidence.id,
+        artifactId: dbEvidence.artifactId,
+        documentType,
+        hash: evidenceRecord.hash
+      });
+    }
+
     res.status(201).json({
       success: true,
       evidence: {
@@ -198,6 +221,120 @@ router.post('/batch', authenticateToken, requireCaseAccess, upload.array('files'
   } catch (error) {
     console.error('Batch evidence submission error:', error);
     res.status(500).json({ error: 'Failed to submit batch evidence' });
+  }
+});
+
+// Upload evidence files to IPFS
+router.post('/upload', authenticateToken, upload.single('file'), async (req: AuthRequest, res) => {
+  try {
+    const file = req.file;
+    const { hash: expectedHash } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    // Calculate file hash
+    const fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+
+    // Verify hash if provided
+    if (expectedHash && fileHash !== expectedHash) {
+      return res.status(400).json({ 
+        error: 'File integrity check failed',
+        expectedHash,
+        actualHash: fileHash
+      });
+    }
+
+    // Upload to IPFS
+    const ipfsResult = await ipfsService.addFile(file.buffer, file.originalname);
+
+    // Pin the file for persistence
+    await ipfsService.pinFile(ipfsResult.hash);
+
+    // Create audit log
+    await db.insert(audit_logs).values({
+      userId: req.user!.id,
+      action: 'FILE_UPLOADED',
+      resourceType: 'file',
+      resourceId: ipfsResult.hash,
+      details: JSON.stringify({
+        filename: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        fileHash,
+        ipfsHash: ipfsResult.hash
+      }),
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('user-agent') || 'unknown'
+    });
+
+    res.json({
+      success: true,
+      filename: file.originalname,
+      fileHash,
+      ipfsHash: ipfsResult.hash,
+      size: ipfsResult.size,
+      uploadedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('File upload error:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload file',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Download evidence file from IPFS
+router.get('/download/:ipfs_hash', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { ipfs_hash } = req.params;
+
+    // Verify user has access to this file by checking evidence records
+    const [evidenceRecord] = await db
+      .select()
+      .from(evidence)
+      .where(eq(evidence.ipfsHash, ipfs_hash))
+      .limit(1);
+
+    if (!evidenceRecord) {
+      return res.status(404).json({ error: 'Evidence not found' });
+    }
+
+    // Get file from IPFS
+    const fileBuffer = await ipfsService.getFile(ipfs_hash);
+    
+    // Get metadata to determine content type
+    const metadata = JSON.parse(evidenceRecord.metadata || '{}');
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', metadata.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${metadata.originalFilename || 'evidence'}"`);
+    res.setHeader('Content-Length', fileBuffer.length);
+
+    // Create audit log for download
+    await db.insert(audit_logs).values({
+      userId: req.user!.id,
+      action: 'FILE_DOWNLOADED',
+      resourceType: 'evidence',
+      resourceId: evidenceRecord.id,
+      details: JSON.stringify({
+        ipfsHash: ipfs_hash,
+        filename: metadata.originalFilename,
+        artifactId: evidenceRecord.artifactId
+      }),
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('user-agent') || 'unknown'
+    });
+
+    res.send(fileBuffer);
+  } catch (error) {
+    console.error('File download error:', error);
+    res.status(500).json({ 
+      error: 'Failed to download file',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

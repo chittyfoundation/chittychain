@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2025-06-19T20:24:09Z",
+  "chainId": "chitty-main",
+  "genesisHash": "0x0",
+  "config": {
+    "blockTime": 10,
+    "consensusType": "proof-of-audit",
+    "validators": ["CD2-A", "CD2-B", "CD2-C", "CD2-D"]
+  },
+  "initialState": {
+    "repos": {
+      "original": 48,
+      "consolidated": 12,
+      "timestamp": "2025-06-19T20:24:09Z"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+id: tea-<name>
+purpose: "<what this tea does>"
+spawned_by: "The Claudenator"
+members:
+  - name: ClaudeGPT
+    role: Evaluator
+  - name: AutoFixer9000
+    role: Patch Monkey
+ttl: 30d
+sunset_policy: archive-on-expiration

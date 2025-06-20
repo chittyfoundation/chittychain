@@ -1,13 +1,15 @@
 import { Router } from 'express';
-import { db } from '../storage';
-import { legal_cases, evidence, audit_logs } from '@shared/schema';
+import { db, legal_cases, evidence, audit_logs } from '../db';
 import { eq, and, desc } from 'drizzle-orm';
 import { authenticateToken, requireCaseAccess, AuthRequest } from '../middleware/auth';
 import { BlockchainService } from '../services/BlockchainService';
+import { CookCountyAPIService } from '../services/CookCountyAPI';
+import { getWebSocketService } from '../services/websocket';
 import crypto from 'crypto';
 
 const router = Router();
 const blockchainService = new BlockchainService();
+const cookCountyAPI = new CookCountyAPIService();
 
 // Create a new case
 router.post('/create', authenticateToken, async (req: AuthRequest, res) => {
@@ -40,6 +42,27 @@ router.post('/create', authenticateToken, async (req: AuthRequest, res) => {
 
     if (existingCase.length > 0) {
       return res.status(409).json({ error: 'Case already exists' });
+    }
+
+    // Verify case with Cook County API if jurisdiction matches
+    if (jurisdiction === 'ILLINOIS-COOK') {
+      const partyNames = [
+        parties?.petitioner?.name || req.user!.email,
+        parties?.respondent?.name || 'Unknown'
+      ];
+
+      const verification = await cookCountyAPI.verifyCaseNumber({
+        caseNumber,
+        jurisdiction,
+        partyNames
+      });
+
+      if (!verification.isValid) {
+        return res.status(400).json({ 
+          error: 'Case verification failed',
+          message: verification.message 
+        });
+      }
     }
 
     // Generate case hash
@@ -350,6 +373,141 @@ router.get('/:case_id/compliance', authenticateToken, requireCaseAccess, async (
   } catch (error) {
     console.error('Compliance report error:', error);
     res.status(500).json({ error: 'Failed to generate compliance report' });
+  }
+});
+
+// Check compliance with Cook County rules
+router.post('/:case_id/check-compliance', authenticateToken, requireCaseAccess, async (req: AuthRequest, res) => {
+  try {
+    const { case_id } = req.params;
+    const { documentType, metadata } = req.body;
+
+    // Get case details
+    const [caseRecord] = await db
+      .select()
+      .from(legal_cases)
+      .where(eq(legal_cases.id, case_id))
+      .limit(1);
+
+    if (!caseRecord) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+
+    // Check compliance with Cook County API
+    const complianceCheck = await cookCountyAPI.checkCompliance({
+      caseNumber: caseRecord.caseNumber,
+      documentType,
+      metadata
+    });
+
+    // Emit WebSocket event if there are compliance issues
+    if (!complianceCheck.isCompliant) {
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.emitCaseUpdate(case_id, 'compliance_check', {
+          isCompliant: false,
+          issues: complianceCheck.issues,
+          documentType,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    res.json(complianceCheck);
+  } catch (error) {
+    console.error('Compliance check error:', error);
+    res.status(500).json({ error: 'Failed to check compliance' });
+  }
+});
+
+// Get court calendar for a case
+router.get('/:case_id/calendar', authenticateToken, requireCaseAccess, async (req: AuthRequest, res) => {
+  try {
+    const { case_id } = req.params;
+
+    // Get case details
+    const [caseRecord] = await db
+      .select()
+      .from(legal_cases)
+      .where(eq(legal_cases.id, case_id))
+      .limit(1);
+
+    if (!caseRecord) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+
+    // Get calendar from Cook County API
+    const calendar = await cookCountyAPI.getCourtCalendar(caseRecord.caseNumber);
+
+    res.json({
+      caseId: case_id,
+      caseNumber: caseRecord.caseNumber,
+      events: calendar
+    });
+  } catch (error) {
+    console.error('Calendar retrieval error:', error);
+    res.status(500).json({ error: 'Failed to retrieve court calendar' });
+  }
+});
+
+// Submit filing to Cook County
+router.post('/:case_id/submit-filing', authenticateToken, requireCaseAccess, async (req: AuthRequest, res) => {
+  try {
+    const { case_id } = req.params;
+    const { documentType, documentHash, timestamp } = req.body;
+
+    // Get case details
+    const [caseRecord] = await db
+      .select()
+      .from(legal_cases)
+      .where(eq(legal_cases.id, case_id))
+      .limit(1);
+
+    if (!caseRecord) {
+      return res.status(404).json({ error: 'Case not found' });
+    }
+
+    // Submit filing to Cook County
+    const filingResult = await cookCountyAPI.submitFiling({
+      caseNumber: caseRecord.caseNumber,
+      documentType,
+      documentHash,
+      submittedBy: req.user!.registrationNumber,
+      timestamp: timestamp || new Date().toISOString()
+    });
+
+    // Record filing in audit log
+    await db.insert(audit_logs).values({
+      userId: req.user!.id,
+      action: 'COOK_COUNTY_FILING',
+      resourceType: 'case',
+      resourceId: case_id,
+      details: JSON.stringify({
+        filingId: filingResult.filingId,
+        confirmationNumber: filingResult.confirmationNumber,
+        documentType,
+        documentHash
+      }),
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('user-agent') || 'unknown'
+    });
+
+    // Emit WebSocket event
+    const wsService = getWebSocketService();
+    if (wsService) {
+      wsService.emitCaseUpdate(case_id, 'filing_submitted', {
+        filingId: filingResult.filingId,
+        confirmationNumber: filingResult.confirmationNumber,
+        documentType,
+        submittedBy: req.user!.email,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    res.json(filingResult);
+  } catch (error) {
+    console.error('Filing submission error:', error);
+    res.status(500).json({ error: 'Failed to submit filing' });
   }
 });
 

@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import './styles/luxury.css';
 
 :root {
   --background: hsl(240, 10%, 3.9%);
@@ -64,8 +65,8 @@
     font-family: 'Inter', sans-serif;
   }
 
-  html {
-    @apply dark;
+  html.dark {
+    color-scheme: dark;
   }
 }
 
@@ -167,19 +168,23 @@
 
   /* Transaction type icons */
   .tx-evidence {
-    @apply bg-chitty-blue text-white;
+    background-color: var(--chitty-blue);
+    color: white;
   }
 
   .tx-property {
-    @apply bg-purple-500 text-white;
+    background-color: rgb(168 85 247);
+    color: white;
   }
 
   .tx-case {
-    @apply bg-yellow-500 text-white;
+    background-color: rgb(234 179 8);
+    color: white;
   }
 
   .tx-audit {
-    @apply bg-green-500 text-white;
+    background-color: rgb(34 197 94);
+    color: white;
   }
 }
 

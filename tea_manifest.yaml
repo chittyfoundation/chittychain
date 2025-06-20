@@ -1,0 +1,18 @@
+# tea_manifest.yaml
+team_name: hallucination-response-unit
+created_by: The Claudenator
+created_at: 2025-01-18T00:00:00Z
+purpose: Handle hallucination events in production systems
+members:
+  - name: Claude
+    role: Evaluator
+    permissions: [read_logs, inject_guardrail, issue_escalation]
+  - name: LLM-Sentinel-01
+    role: Transcript Monitor
+    permissions: [read_logs, tag_flagged_output]
+  - name: HumanOverride_Lead
+    role: Escalation Agent
+    permissions: [review, kill_switch]
+ttl_days: 30
+sunset_criteria: All flagged hallucinations must drop below 0.5% for 14 days
+registry_path: air/registry/teams/hallucination-response-unit.yaml
