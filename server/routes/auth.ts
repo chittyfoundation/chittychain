@@ -101,10 +101,7 @@ router.post('/verify-2fa', async (req, res) => {
     }
 
     // Activate user account
-    await db
-      .update(users)
-      .set({ isActive: true })
-      .where(eq(users.id, userId));
+    await db.updateUser(userId, { isActive: true });
 
     res.json({ message: '2FA verified successfully. Account activated.' });
   } catch (error) {
@@ -118,11 +115,7 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password, twoFactorToken } = req.body;
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const user = await db.getUserByUsername(email);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -153,10 +146,7 @@ router.post('/login', async (req, res) => {
     });
 
     // Update last login
-    await db
-      .update(users)
-      .set({ lastLogin: new Date() })
-      .where(eq(users.id, user.id));
+    await db.updateUser(user.id, { lastLogin: new Date() });
 
     res.json({
       token,

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
-import { db, evidence, audit_logs } from '../db';
+import { db } from '../storage';
+import { evidenceRecords, auditLogs } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { authenticateToken, requireCaseAccess, AuthRequest } from '../middleware/auth';
 import { BlockchainService } from '../services/BlockchainService';
