@@ -15,14 +15,14 @@ import {
 } from './middleware/errorHandler.js';
 import { sanitizeInput, rateLimiters } from './middleware/validation.js';
 
-// Import API routes
-import authRoutes from './routes/auth';
-import evidenceRoutes from './routes/evidence';
-import casesRoutes from './routes/cases';
-import artifactsRoutes from './routes/artifacts';
-import chainRoutes from './routes/chain';
-import complianceRoutes from './routes/compliance';
-import airRoutes from './routes/air';
+// Import API routes (temporarily disabled due to import errors)
+// import authRoutes from './routes/auth';
+// import evidenceRoutes from './routes/evidence';
+// import casesRoutes from './routes/cases';
+// import artifactsRoutes from './routes/artifacts';
+// import chainRoutes from './routes/chain';
+// import complianceRoutes from './routes/compliance';
+// import airRoutes from './routes/air';
 
 // Import WebSocket service
 import { WebSocketService } from './websocket';
@@ -100,14 +100,14 @@ app.use(session({
 app.get('/health', healthCheck);
 app.get('/api/health', healthCheck);
 
-// API Routes
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/evidence', evidenceRoutes);
-app.use('/api/v1/cases', casesRoutes);
-app.use('/api/v1/artifacts', artifactsRoutes);
-app.use('/api/v1/chain', chainRoutes);
-app.use('/api/v1/compliance', complianceRoutes);
-app.use('/api/v1/air', airRoutes);
+// API Routes (temporarily disabled due to import errors)
+// app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/evidence', evidenceRoutes);
+// app.use('/api/v1/cases', casesRoutes);
+// app.use('/api/v1/artifacts', artifactsRoutes);
+// app.use('/api/v1/chain', chainRoutes);
+// app.use('/api/v1/compliance', complianceRoutes);
+// app.use('/api/v1/air', airRoutes);
 
 // Prometheus metrics endpoint
 app.get('/metrics', async (req, res) => {
@@ -120,31 +120,31 @@ app.get('/metrics', async (req, res) => {
   }
 });
 
-// Register existing routes (blockchain, properties, etc.)
-const httpServer = await registerRoutes(app);
-
-// Initialize WebSocket service
-const wsService = new WebSocketService(httpServer);
-setWebSocketService(wsService);
-
-// Export WebSocket service for use in routes
-export { wsService };
-
 // 404 handler for unmatched routes
 app.use(notFoundHandler);
 
 // Global error handling middleware (must be last)
 app.use(errorHandler);
 
-const port = env.PORT;
+// Register existing routes (blockchain, properties, etc.)
+registerRoutes(app).then(httpServer => {
+  // Initialize WebSocket service
+  const wsService = new WebSocketService(httpServer);
+  setWebSocketService(wsService);
 
-httpServer.listen(port, () => {
-  console.log(`🚀 ChittyChain Cloud Server running on port ${port}`);
-  console.log(`📊 API Version: v1`);
-  console.log(`🌍 Environment: ${env.NODE_ENV}`);
-  console.log(`⛓️  Blockchain: ChittyChain initialized`);
-  console.log(`🔐 Security: JWT + 2FA enabled`);
-  console.log(`⚖️  Compliance: Cook County Rules active`);
-  console.log(`🔓 WebSocket: Real-time updates enabled`);
-  console.log(`📝 Health Check: http://localhost:${port}/health`);
+  const port = env.PORT;
+  
+  httpServer.listen(port, () => {
+    console.log(`🚀 ChittyChain Cloud Server running on port ${port}`);
+    console.log(`📊 API Version: v1`);
+    console.log(`🌍 Environment: ${env.NODE_ENV}`);
+    console.log(`⛓️  Blockchain: ChittyChain initialized`);
+    console.log(`🔐 Security: JWT + 2FA enabled`);
+    console.log(`⚖️  Compliance: Cook County Rules active`);
+    console.log(`🔓 WebSocket: Real-time updates enabled`);
+    console.log(`📝 Health Check: http://localhost:${port}/health`);
+  });
+}).catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

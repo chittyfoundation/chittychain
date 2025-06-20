@@ -167,9 +167,9 @@ export class MemStorage implements IStorage {
       role: insertUser.role || 'PARTY_RESPONDENT',
       twoFactorSecret: insertUser.twoFactorSecret || null,
       isActive: insertUser.isActive || false,
-      isVerified: insertUser.isVerified || false,
-      permissions: insertUser.permissions || null,
       apiKeyHash: insertUser.apiKeyHash || null,
+      claudeUserId: insertUser.claudeUserId || null,
+      authProvider: insertUser.authProvider || null,
       id,
       createdAt: new Date(),
       lastLogin: null,
@@ -207,6 +207,8 @@ export class MemStorage implements IStorage {
       ...block,
       id,
       timestamp: new Date(),
+      miner: block.miner || null,
+      transactions: block.transactions || [],
     };
     this.blocks.set(id, fullBlock);
     return fullBlock;
