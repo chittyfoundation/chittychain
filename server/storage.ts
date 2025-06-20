@@ -30,6 +30,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
 
   // Block operations
   getBlock(id: number): Promise<Block | undefined>;
@@ -154,7 +155,7 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.email === username,
     );
   }
 
@@ -167,6 +168,17 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const existing = this.users.get(id);
+    if (!existing) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    
+    const updated: User = { ...existing, ...updates };
+    this.users.set(id, updated);
+    return updated;
   }
 
   // Block operations

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import qrcode from 'qrcode';
-import { db, users } from '../db';
+import { db } from '../storage';
+import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import {
   generateToken,
@@ -38,13 +39,9 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const existingUser = await db.getUserByUsername(email);
 
-    if (existingUser.length > 0) {
+    if (existingUser) {
       return res.status(409).json({ error: 'User already exists' });
     }
 
@@ -55,7 +52,7 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     // Create user
-    const [newUser] = await db.insert(users).values({
+    const newUser = await db.createUser({
       email,
       passwordHash: hashedPassword,
       registrationNumber,
@@ -65,7 +62,7 @@ router.post('/register', async (req, res) => {
       role: role || 'PARTY_RESPONDENT',
       twoFactorSecret: twoFASecret.base32,
       isActive: false // Requires 2FA verification to activate
-    }).returning();
+    });
 
     // Generate QR code for 2FA setup
     const qrCodeUrl = await qrcode.toDataURL(twoFASecret.otpauth_url!);
@@ -87,11 +84,7 @@ router.post('/verify-2fa', async (req, res) => {
   try {
     const { userId, token } = req.body;
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const user = await db.getUser(userId);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
