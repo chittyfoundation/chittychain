@@ -211,3 +211,54 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
 export type AuditLog = typeof audit_logs.$inferSelect;
 export type InsertAudit = z.infer<typeof insertAuditSchema>;
+
+// Approval requests tables
+export const approvalRequests = pgTable("approval_requests", {
+  id: serial("id").primaryKey(),
+  requestId: text("request_id").notNull().unique(),
+  caseId: integer("case_id").references(() => legal_cases.id),
+  title: text("title").notNull(),
+  requestType: text("request_type").notNull(),
+  requestDate: text("request_date").notNull(),
+  requestTime: text("request_time").notNull(),
+  location: text("location"),
+  description: text("description"),
+  photoUrl: text("photo_url"),
+  status: text("status").notNull().default("pending"),
+  createdBy: integer("created_by").references(() => users.id),
+  blockHash: text("block_hash"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const requestRecipients = pgTable("request_recipients", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => approvalRequests.id).notNull(),
+  recipient: text("recipient").notNull(),
+  recipientType: text("recipient_type").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const requestResponses = pgTable("request_responses", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => approvalRequests.id).notNull(),
+  recipient: text("recipient").notNull(),
+  response: text("response").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  signature: text("signature"),
+  respondedAt: timestamp("responded_at").defaultNow().notNull(),
+});
+
+// Approval types
+export type ApprovalRequest = typeof approvalRequests.$inferSelect;
+export type RequestRecipient = typeof requestRecipients.$inferSelect;
+export type RequestResponse = typeof requestResponses.$inferSelect;
+
+export const insertApprovalSchema = createInsertSchema(approvalRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertApproval = z.infer<typeof insertApprovalSchema>;

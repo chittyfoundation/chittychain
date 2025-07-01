@@ -9,18 +9,29 @@ ChittyChain/ChittyStacks is a blockchain-based legal evidence management platfor
 ## Tech Stack
 
 - **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS + Shadcn/ui
-- **Backend**: Express.js + TypeScript
+- **Backend**: Express.js + TypeScript with Helmet security
 - **Database**: PostgreSQL with Drizzle ORM
 - **Blockchain**: Custom ChittyChain with Proof-of-Audit consensus
+- **Storage**: IPFS + AWS S3 (memory storage for development)
 - **Runtime**: Node.js 20 on Replit
 
 ## Development Commands
 
 ```bash
+# Core development
 npm run dev          # Start development server (port 5000)
 npm run build        # Build client and server
 npm run start        # Run production build
+
+# Database
 npm run db:push      # Push database schema changes
+
+# Testing
+npm run test         # Run tests with Vitest (watch mode)
+npm run test:run     # Run tests once
+npm run test:security # Run security tests
+npm run test:integration # Run integration tests
+npm run test:coverage # Run tests with coverage report
 ```
 
 ## Architecture
@@ -28,6 +39,10 @@ npm run db:push      # Push database schema changes
 ### Directory Structure
 - `client/` - React frontend application
 - `server/` - Express backend with blockchain implementation
+  - `blockchain/` - ChittyChain implementation
+  - `routes/` - API route handlers
+  - `middleware/` - Express middleware
+  - `config/` - Configuration and environment validation
 - `shared/` - Shared types and database schemas
 - `attached_assets/` - Documentation and specifications
 
@@ -35,6 +50,12 @@ npm run db:push      # Push database schema changes
 - `@/` - client/src
 - `@shared/` - shared
 - `@assets/` - attached_assets
+
+### Key Configuration Files
+- `server/config/environment.ts` - Environment validation with Zod
+- `shared/schema.ts` - Drizzle ORM database schemas
+- `vitest.config.ts` - Test configuration
+- `docker-compose.yml` - Full stack with monitoring
 
 ## API Implementation Requirements
 
@@ -96,11 +117,12 @@ interface ArtifactIdentifier {
 - User Registration: `^REG[0-9]{8}$` (e.g., "REG12345678")
 
 ### Security Requirements
-- Multi-factor authentication required
+- Multi-factor authentication with speakeasy TOTP
 - AES-256 encryption at rest
 - TLS 1.3 for transit
-- Audit all access and modifications
+- Helmet.js security headers
 - Rate limiting on all endpoints
+- Environment validation prevents default secrets in production
 
 ### File Storage Structure
 ```
@@ -118,23 +140,49 @@ interface ArtifactIdentifier {
 
 ## Database Schema
 
-Key tables already defined in `shared/schema.ts`:
-- users (with registration numbers)
-- blocks (blockchain data)
-- evidence (case artifacts)
-- legal_cases
-- property_nfts
-- smart_contracts
-- transactions
-- audit_logs
+Key tables in `shared/schema.ts`:
+- `users` - User management with registration numbers and MFA
+- `blocks` - Blockchain data with Proof-of-Audit fields
+- `evidence` - Case artifacts with IPFS hashes
+- `legal_cases` - Case management with jurisdiction
+- `property_nfts` - NFT property records
+- `smart_contracts` - Deployed contract tracking
+- `transactions` - Blockchain transactions
+- `audit_logs` - Comprehensive audit trail
 
 ## Blockchain Implementation
 
-The blockchain code exists in `server/blockchain/` with:
-- Proof-of-Audit consensus mechanism
-- Smart contract support
-- Transaction verification
-- Block mining capabilities
+The blockchain code in `server/blockchain/` includes:
+- Custom ChittyChain with Proof-of-Audit consensus
+- Smart contract support with Solidity integration
+- Transaction verification and validation
+- Block mining with difficulty adjustment
+- Merkle tree implementation for evidence chains
+- Chain verification endpoints
+
+## Development Notes
+
+### Environment Setup
+- Environment variables validated by Zod schemas
+- Required vars: DATABASE_URL, JWT_SECRET, NODE_ENV
+- Optional: IPFS_API_URL, S3_BUCKET, REDIS_URL
+
+### Memory Storage
+- Development uses MemStorage implementation
+- Production requires proper IPFS/S3 configuration
+- Storage interface allows easy swapping
+
+### Authentication Flow
+- JWT tokens with refresh token support
+- Passport.js strategies for OAuth
+- 2FA using speakeasy TOTP
+- Session management with Redis
+
+### Testing Approach
+- Vitest for unit and integration tests
+- Test database separate from development
+- Security test suite for vulnerability checks
+- Coverage reports with v8
 
 ## Performance Requirements
 - Throughput: 10,000 artifacts/hour
@@ -143,9 +191,11 @@ The blockchain code exists in `server/blockchain/` with:
 - Uptime: 99.99% SLA
 
 ## Implementation Priority
-1. Set up authentication system with MFA
-2. Implement case management endpoints
+1. Complete authentication system with MFA
+2. Implement remaining case management endpoints
 3. Create artifact binding with cryptographic verification
 4. Build evidence submission pipeline
 5. Integrate blockchain for immutable audit trail
 6. Add WebSocket support for real-time updates
+7. Implement proper file storage (IPFS/S3)
+8. Add monitoring and alerting

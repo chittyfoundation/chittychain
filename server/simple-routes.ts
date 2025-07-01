@@ -2,10 +2,14 @@ import express, { type Express, type Request, type Response } from 'express';
 import { createServer, type Server } from 'http';
 import { WebSocketServer } from 'ws';
 import { storage } from './storage';
+import { approvalsRouter } from './routes/approvals';
 
 export async function registerSimpleRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const server = createServer(app);
+
+  // Register approval routes
+  app.use('/api/v1/approvals', approvalsRouter);
 
   // Basic API endpoints for ChittyChain
   app.get('/api/v1/status', (req: Request, res: Response) => {

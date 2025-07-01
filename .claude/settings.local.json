@@ -24,7 +24,8 @@
       "Bash(echo:*)",
       "Bash(touch:*)",
       "Bash(npm run db:push:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
