@@ -5,7 +5,8 @@ import {
   Scale, 
   Home, 
   Activity,
-  Gauge
+  Gauge,
+  Brain
 } from "lucide-react";
 
 interface SidebarProps {
@@ -20,6 +21,7 @@ export function Sidebar({ activeSection, onSectionChange, isConnected }: Sidebar
     { id: 'blockchain', label: 'Blockchain Core', icon: Activity },
     { id: 'contracts', label: 'Smart Contracts', icon: FileText },
     { id: 'evidence', label: 'Evidence Chains', icon: Shield },
+    { id: 'ai-analysis', label: 'AI Analysis', icon: Brain },
     { id: 'cases', label: 'Case Management', icon: Scale },
     { id: 'property', label: 'Property NFTs', icon: Home },
     { id: 'monitoring', label: 'Monitoring', icon: Gauge },
@@ -29,6 +31,7 @@ export function Sidebar({ activeSection, onSectionChange, isConnected }: Sidebar
     { name: 'ChittyChain Core', status: 'active' },
     { name: 'IPFS Network', status: 'active' },
     { name: 'WebSocket', status: isConnected ? 'active' : 'error' },
+    { name: 'AI Analysis', status: 'active' },
     { name: 'Audit Engine', status: 'pending' },
   ];
 
