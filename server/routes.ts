@@ -260,6 +260,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Analysis routes - import and mount
+  try {
+    const { aiAnalysisRouter } = await import('./routes/ai-analysis.js');
+    app.use('/api/v1/ai-analysis', aiAnalysisRouter);
+    console.log('✅ AI Analysis routes mounted at /api/v1/ai-analysis');
+  } catch (error) {
+    console.error('❌ Failed to load AI Analysis routes:', error);
+  }
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates
