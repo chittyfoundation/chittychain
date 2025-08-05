@@ -6,7 +6,8 @@ import {
   Home, 
   Activity,
   Gauge,
-  Brain
+  Brain,
+  Network
 } from "lucide-react";
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ export function Sidebar({ activeSection, onSectionChange, isConnected }: Sidebar
     { id: 'ai-analysis', label: 'AI Analysis', icon: Brain },
     { id: 'cases', label: 'Case Management', icon: Scale },
     { id: 'property', label: 'Property NFTs', icon: Home },
+    { id: 'ecosystem', label: 'Ecosystem', icon: Network },
     { id: 'monitoring', label: 'Monitoring', icon: Gauge },
   ];
 

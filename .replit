@@ -18,9 +18,5 @@ externalPort = 80
 localPort = 5001
 externalPort = 3000
 
-[[ports]]
-localPort = 54545
-externalPort = 3001
-
 [agent]
 integrations = ["javascript_openai==1.0.0", "javascript_anthropic==1.0.0"]

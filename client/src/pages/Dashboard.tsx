@@ -7,10 +7,11 @@ import { SmartContractStatus } from "@/components/SmartContractStatus";
 import { BlockchainVisualization } from "@/components/BlockchainVisualization";
 import { EvidenceChainPanel } from "@/components/EvidenceChainPanel";
 import { AIAnalysisDashboard } from "@/components/ai/AIAnalysisDashboard";
+import { EcosystemOverview } from "@/components/ecosystem/EcosystemOverview";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useBlockchain } from "@/hooks/useBlockchain";
 
-type SectionType = 'dashboard' | 'blockchain' | 'contracts' | 'evidence' | 'cases' | 'property' | 'monitoring' | 'ai-analysis';
+type SectionType = 'dashboard' | 'blockchain' | 'contracts' | 'evidence' | 'cases' | 'property' | 'monitoring' | 'ai-analysis' | 'ecosystem';
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<SectionType>('dashboard');
@@ -81,6 +82,9 @@ export default function Dashboard() {
 
       case 'ai-analysis':
         return <AIAnalysisDashboard />;
+
+      case 'ecosystem':
+        return <EcosystemOverview />;
       
       case 'monitoring':
         return (

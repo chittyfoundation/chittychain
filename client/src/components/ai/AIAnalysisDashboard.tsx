@@ -18,7 +18,8 @@ import {
   Eye,
   Users,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Network
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -262,10 +263,11 @@ export function AIAnalysisDashboard() {
 
       {/* Main Dashboard Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analysis">Evidence Analysis</TabsTrigger>
           <TabsTrigger value="patterns">Pattern Detection</TabsTrigger>
+          <TabsTrigger value="crossplatform">Cross-Platform</TabsTrigger>
           <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
         </TabsList>
 
@@ -542,6 +544,90 @@ export function AIAnalysisDashboard() {
               </Card>
             </>
           )}
+        </TabsContent>
+
+        {/* Cross-Platform Analysis Tab */}
+        <TabsContent value="crossplatform" className="space-y-4">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Network className="h-5 w-5" />
+                  <span>Ecosystem Integration</span>
+                </CardTitle>
+                <CardDescription>AI analysis across ChittyChain platforms</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Network className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Cross-Platform Analysis</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Analyze evidence patterns and correlations across the ChittyChain ecosystem
+                  </p>
+                  <Button>
+                    <Network className="h-4 w-4 mr-2" />
+                    Open Full Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Platform Connections</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">ChittyChainLedger</span>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">ChittyTrust</span>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">ChittyVerify</span>
+                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">ChittyResolution</span>
+                      <AlertTriangle className="h-4 w-4 text-gray-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Data Synchronization</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">98.5%</div>
+                    <div className="text-sm text-muted-foreground">Sync Success Rate</div>
+                    <Progress value={98.5} className="mt-2" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Cross-Platform Insights</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">247</div>
+                    <div className="text-sm text-muted-foreground">Active Correlations</div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Across 4 platforms
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Capabilities Tab */}
