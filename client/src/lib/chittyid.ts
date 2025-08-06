@@ -145,7 +145,7 @@ export const chittyIdApi = {
       return {
         chittyId,
         displayFormat: chittyId,
-        timestamp,
+        timestamp: timestamp || undefined,
         vertical: components?.vertical,
         valid: true
       };
@@ -178,7 +178,7 @@ export const chittyIdApi = {
         chittyId,
         valid,
         details: details || undefined,
-        timestamp,
+        timestamp: timestamp || undefined,
         vertical: details?.vertical
       };
     }
