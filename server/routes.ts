@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage.js";
 import chittyIdRoutes from "./routes/chittyid.js";
+import beaconRoutes from "./routes/beacon.js";
+import { chittyBeacon } from "./services/ChittyBeaconService.js";
 import { BlockchainService } from "./services/BlockchainService.js";
 import { EvidenceService } from "./services/EvidenceService.js";
 import { PropertyService } from "./services/PropertyService.js";
@@ -18,6 +20,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ChittyID routes
   app.use("/api/chittyid", chittyIdRoutes);
+
+  // ChittyBeacon routes
+  app.use("/api/beacon", beaconRoutes);
+
+  // Initialize ChittyBeacon tracking
+  chittyBeacon.initialize().catch(console.error);
 
   // Blockchain routes
   app.get("/api/blockchain/status", async (req, res) => {

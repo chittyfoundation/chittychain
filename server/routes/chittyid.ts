@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
+import { ChittyIDService } from '../services/ChittyIDService.js';
 
 const router = Router();
 
@@ -14,95 +15,68 @@ const validateChittyIDSchema = z.object({
   chittyId: z.string().min(1)
 });
 
-// ChittyID Core System (simplified server-side implementation)
-class ChittyIDServer {
-  private static readonly PREFIX = 'CHTTY';
-  private static readonly VERTICALS = ['user', 'evidence', 'case', 'property', 'contract', 'audit'];
-  
-  static generateChittyID(vertical: string = 'user', nodeId: string = '1'): string {
-    if (!this.VERTICALS.includes(vertical)) {
-      throw new Error(`Invalid vertical: ${vertical}`);
-    }
+const bulkGenerateSchema = z.object({
+  count: z.number().min(1).max(100).default(10),
+  vertical: z.enum(['user', 'evidence', 'case', 'property', 'contract', 'audit']).default('user'),
+  nodeId: z.string().default('1'),
+  jurisdiction: z.string().default('USA')
+});
 
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const sequence = Math.random().toString(36).substr(2, 4).toUpperCase();
-    
-    const components = [this.PREFIX, timestamp, vertical.toUpperCase(), nodeId, sequence].join('-');
-    const checksum = this.generateChecksum(components);
-    
-    return `${components}-${checksum}`;
-  }
-
-  static validateChittyID(chittyId: string): boolean {
-    try {
-      const parts = chittyId.split('-');
-      if (parts.length !== 6) return false;
-      
-      const [prefix, timestamp, vertical, nodeId, sequence, checksum] = parts;
-      
-      if (prefix !== this.PREFIX) return false;
-      if (!this.VERTICALS.includes(vertical.toLowerCase())) return false;
-      
-      const expectedChecksum = this.generateChecksum([prefix, timestamp, vertical, nodeId, sequence].join('-'));
-      return checksum === expectedChecksum;
-    } catch {
-      return false;
-    }
-  }
-
-  static parseChittyID(chittyId: string) {
-    if (!this.validateChittyID(chittyId)) return null;
-    
-    const [prefix, timestamp, vertical, nodeId, sequence, checksum] = chittyId.split('-');
-    
-    return {
-      prefix,
-      timestamp: parseInt(timestamp, 36),
-      vertical: vertical.toLowerCase(),
-      nodeId,
-      sequence,
-      checksum
-    };
-  }
-
-  private static generateChecksum(input: string): string {
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36).substr(0, 4).toUpperCase();
-  }
-}
+const listChittyIDsSchema = z.object({
+  vertical: z.string().optional(),
+  nodeId: z.string().optional(),
+  jurisdiction: z.string().optional(),
+  limit: z.number().min(1).max(1000).optional()
+});
 
 // Health check endpoint
-router.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    service: 'ChittyID v2.0.0',
-    timestamp: new Date().toISOString()
-  });
+router.get('/health', async (req: Request, res: Response) => {
+  try {
+    const health = await ChittyIDService.healthCheck();
+    res.json(health);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      service: 'ChittyID v2.0.0',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Generate ChittyID
-router.post('/generate', async (req, res) => {
+router.post('/generate', async (req: Request, res: Response) => {
   try {
     const { vertical, nodeId, jurisdiction } = generateChittyIDSchema.parse(req.body);
     
-    const chittyId = ChittyIDServer.generateChittyID(vertical, nodeId);
-    const parsed = ChittyIDServer.parseChittyID(chittyId);
+    const chittyId = ChittyIDService.generateChittyID(vertical, nodeId, jurisdiction);
+    const parsed = ChittyIDService.parseChittyID(chittyId);
+    const timestamp = ChittyIDService.getTimestamp(chittyId);
+
+    // Store the generated ID
+    const record = await ChittyIDService.storeChittyID({
+      chittyId,
+      vertical,
+      nodeId,
+      jurisdiction,
+      timestamp: timestamp || Date.now(),
+      isValid: true,
+      metadata: {
+        generatedViaAPI: true,
+        userAgent: req.get('User-Agent')
+      }
+    });
 
     res.json({
       chittyId,
       displayFormat: chittyId,
       timestamp: parsed?.timestamp,
       vertical: parsed?.vertical,
-      valid: ChittyIDServer.validateChittyID(chittyId),
+      valid: ChittyIDService.validateChittyID(chittyId),
       metadata: {
         nodeId,
         jurisdiction,
-        generatedAt: new Date().toISOString()
+        generatedAt: record.generatedAt.toISOString(),
+        recordId: record.id
       }
     });
   } catch (error) {
@@ -114,17 +88,20 @@ router.post('/generate', async (req, res) => {
 });
 
 // Validate ChittyID
-router.post('/validate', async (req, res) => {
+router.post('/validate', async (req: Request, res: Response) => {
   try {
     const { chittyId } = validateChittyIDSchema.parse(req.body);
     
-    const isValid = ChittyIDServer.validateChittyID(chittyId);
-    const parsed = isValid ? ChittyIDServer.parseChittyID(chittyId) : null;
+    const isValid = ChittyIDService.validateChittyID(chittyId);
+    const parsed = isValid ? ChittyIDService.parseChittyID(chittyId) : null;
+    const stored = await ChittyIDService.getChittyID(chittyId);
 
     res.json({
       chittyId,
       valid: isValid,
       details: parsed,
+      stored: !!stored,
+      record: stored || null,
       validatedAt: new Date().toISOString()
     });
   } catch (error) {
@@ -135,30 +112,68 @@ router.post('/validate', async (req, res) => {
   }
 });
 
-// Bulk generate ChittyIDs
-router.post('/generate/bulk', async (req, res) => {
+// Get ChittyID by ID
+router.get('/:chittyId', async (req: Request, res: Response) => {
   try {
-    const { count = 10, vertical = 'user', nodeId = '1' } = req.body;
+    const { chittyId } = req.params;
+    const record = await ChittyIDService.getChittyID(chittyId);
     
-    if (count > 100) {
-      return res.status(400).json({ error: 'Maximum bulk generation limit is 100 IDs' });
+    if (!record) {
+      return res.status(404).json({ error: 'ChittyID not found' });
     }
 
-    const ids = [];
-    for (let i = 0; i < count; i++) {
-      const chittyId = ChittyIDServer.generateChittyID(vertical, nodeId);
-      const parsed = ChittyIDServer.parseChittyID(chittyId);
-      ids.push({
-        chittyId,
-        timestamp: parsed?.timestamp,
-        vertical: parsed?.vertical
-      });
-    }
+    res.json(record);
+  } catch (error) {
+    console.error('ChittyID retrieval error:', error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    });
+  }
+});
+
+// List ChittyIDs with filters
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const filters = listChittyIDsSchema.parse(req.query);
+    const records = await ChittyIDService.listChittyIDs(filters);
+    
+    res.json({
+      records,
+      count: records.length,
+      filters
+    });
+  } catch (error) {
+    console.error('ChittyID listing error:', error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    });
+  }
+});
+
+// Get statistics
+router.get('/stats/overview', async (req: Request, res: Response) => {
+  try {
+    const stats = await ChittyIDService.getStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('ChittyID stats error:', error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    });
+  }
+});
+
+// Bulk generate ChittyIDs
+router.post('/generate/bulk', async (req: Request, res: Response) => {
+  try {
+    const options = bulkGenerateSchema.parse(req.body);
+    const records = await ChittyIDService.bulkGenerate(options);
 
     res.json({
-      ids,
-      count: ids.length,
-      generatedAt: new Date().toISOString()
+      records,
+      count: records.length,
+      generatedAt: new Date().toISOString(),
+      options
     });
   } catch (error) {
     console.error('Bulk ChittyID generation error:', error);
