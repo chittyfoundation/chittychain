@@ -8,10 +8,11 @@ import { BlockchainVisualization } from "@/components/BlockchainVisualization";
 import { EvidenceChainPanel } from "@/components/EvidenceChainPanel";
 import { AIAnalysisDashboard } from "@/components/ai/AIAnalysisDashboard";
 import { EcosystemOverview } from "@/components/ecosystem/EcosystemOverview";
+import { ChittyIDDashboard } from "@/components/chittyid/ChittyIDDashboard";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useBlockchain } from "@/hooks/useBlockchain";
 
-type SectionType = 'dashboard' | 'blockchain' | 'contracts' | 'evidence' | 'cases' | 'property' | 'monitoring' | 'ai-analysis' | 'ecosystem';
+type SectionType = 'dashboard' | 'blockchain' | 'contracts' | 'evidence' | 'cases' | 'property' | 'monitoring' | 'ai-analysis' | 'ecosystem' | 'chittyid';
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<SectionType>('dashboard');
@@ -85,6 +86,9 @@ export default function Dashboard() {
 
       case 'ecosystem':
         return <EcosystemOverview />;
+
+      case 'chittyid':
+        return <ChittyIDDashboard />;
       
       case 'monitoring':
         return (

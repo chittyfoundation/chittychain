@@ -24,7 +24,20 @@ const ecosystemComponents: EcosystemComponent[] = [
       'Blockchain Core',
       'Smart Contracts'
     ],
-    integrations: ['ChittyTrust', 'ChittyVerify', 'ChittyChainLedger']
+    integrations: ['ChittyTrust', 'ChittyVerify', 'ChittyChainLedger', 'ChittyID']
+  },
+  {
+    name: 'ChittyID',
+    description: 'Universal identifier system for blockchain legal evidence management',
+    status: 'active',
+    features: [
+      'Unique ID Generation',
+      'Multi-Vertical Support',
+      'Checksum Validation',
+      'Timestamp Integration',
+      'Bulk Operations'
+    ],
+    integrations: ['ChittyChain', 'ChittyChainLedger', 'ChittyTrust']
   },
   {
     name: 'ChittyChainLedger',

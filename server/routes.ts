@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage.js";
+import chittyIdRoutes from "./routes/chittyid.js";
 import { BlockchainService } from "./services/BlockchainService.js";
 import { EvidenceService } from "./services/EvidenceService.js";
 import { PropertyService } from "./services/PropertyService.js";
@@ -14,6 +15,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const evidenceService = new EvidenceService();
   const propertyService = new PropertyService();
   const caseService = new CaseService();
+
+  // ChittyID routes
+  app.use("/api/chittyid", chittyIdRoutes);
 
   // Blockchain routes
   app.get("/api/blockchain/status", async (req, res) => {
