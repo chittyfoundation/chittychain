@@ -71,7 +71,9 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
-    service: 'ChittyChain'
+    service: 'ChittyChain',
+    host: req.get('host'),
+    url: `${req.protocol}://${req.get('host')}`
   });
 });
 
@@ -98,7 +100,7 @@ app.use((req, res) => {
 registerSimpleRoutes(app).then(httpServer => {
   const port = env.PORT;
   
-  httpServer.listen(port, () => {
+  httpServer.listen(port, '0.0.0.0', () => {
     console.log(`🚀 ChittyChain Cloud Server running on port ${port}`);
     console.log(`📊 API Version: v1`);
     console.log(`🌍 Environment: ${env.NODE_ENV}`);
@@ -106,7 +108,8 @@ registerSimpleRoutes(app).then(httpServer => {
     console.log(`🔐 Security: JWT + 2FA enabled`);
     console.log(`⚖️  Compliance: Cook County Rules active`);
     console.log(`🔓 WebSocket: Real-time updates enabled`);
-    console.log(`📝 Health Check: http://localhost:${port}/health`);
+    console.log(`📝 Health Check: https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:' + port}/health`);
+    console.log(`🌐 ChittyChain Dashboard: https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:' + port}`);
   });
 }).catch((error: any) => {
   console.error('Failed to start server:', error);
