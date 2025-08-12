@@ -180,7 +180,7 @@ export default function Dashboard() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
           activeSection={activeSection} 
-          onSectionChange={setActiveSection}
+          onSectionChange={(section: string) => setActiveSection(section as SectionType)}
           isConnected={isConnected}
         />
         

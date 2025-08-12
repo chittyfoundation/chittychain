@@ -3,10 +3,19 @@ import { createServer, type Server } from 'http';
 import { WebSocketServer } from 'ws';
 import { storage } from './storage';
 import { approvalsRouter } from './routes/approvals';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function registerSimpleRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const server = createServer(app);
+
+  // Serve static files from dist/public
+  const staticPath = path.join(__dirname, '..', 'dist', 'public');
+  app.use(express.static(staticPath));
 
   // Register approval routes
   app.use('/api/v1/approvals', approvalsRouter);
