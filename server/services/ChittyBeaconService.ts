@@ -4,7 +4,7 @@
  */
 
 import { createServer } from 'http';
-import { storage } from '../storage.js';
+import { neonStorage as storage } from '../neon-storage.js';
 import { execSync } from 'child_process';
 import { readFileSync, existsSync } from 'fs';
 import { hostname, type, release, uptime } from 'os';

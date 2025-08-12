@@ -1,4 +1,4 @@
-import { storage } from '../storage.js';
+import { neonStorage as storage } from '../neon-storage.js';
 import type { IStorage } from '../storage.js';
 
 export interface ChittyIDComponents {

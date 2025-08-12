@@ -121,7 +121,91 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Audit logs
+// MASTER EVIDENCE - Canonical registry of every artifact
+export const masterEvidence = pgTable("master_evidence", {
+  id: serial("id").primaryKey(),
+  artifactId: text("artifact_id").notNull().unique(),
+  caseBinding: integer("case_binding").references(() => legal_cases.id),
+  userBinding: integer("user_binding").references(() => users.id),
+  evidenceType: text("evidence_type").notNull(),
+  evidenceTier: text("evidence_tier").notNull(),
+  evidenceWeight: integer("evidence_weight"), // 0-100 scale
+  contentHash: text("content_hash").notNull(),
+  originalFilename: text("original_filename"),
+  uploadDate: timestamp("upload_date").defaultNow(),
+  sourceVerificationStatus: text("source_verification_status").default("Pending"),
+  authenticationMethod: text("authentication_method"),
+  supportingClaims: text("supporting_claims").array(),
+  contradictingClaims: text("contradicting_claims").array(),
+  mintingStatus: text("minting_status").default("Pending"),
+  blockNumber: text("block_number"),
+  auditNotes: text("audit_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ATOMIC FACTS - Line-item facts extracted from evidence
+export const atomicFacts = pgTable("atomic_facts", {
+  id: serial("id").primaryKey(),
+  factId: text("fact_id").notNull().unique(),
+  parentDocument: integer("parent_document").references(() => masterEvidence.id),
+  factText: text("fact_text").notNull(),
+  factType: text("fact_type").notNull(),
+  locationInDocument: text("location_in_document"),
+  classificationLevel: text("classification_level").notNull(),
+  weight: integer("weight"), // 0-100 scale
+  credibilityFactors: text("credibility_factors").array(),
+  supportsCaseTheory: text("supports_case_theory").array(),
+  contradictsCaseTheory: text("contradicts_case_theory").array(),
+  chittyChainStatus: text("chittychain_status").default("Pending"),
+  verificationDate: timestamp("verification_date"),
+  verificationMethod: text("verification_method"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// CHAIN OF CUSTODY LOG - Immutable hand-off entries
+export const chainOfCustodyLog = pgTable("chain_of_custody_log", {
+  id: serial("id").primaryKey(),
+  logId: integer("log_id").notNull().unique(),
+  evidence: integer("evidence").references(() => masterEvidence.id),
+  custodian: integer("custodian").references(() => users.id),
+  dateReceived: timestamp("date_received"),
+  dateTransferred: timestamp("date_transferred"),
+  transferMethod: text("transfer_method"),
+  integrityCheckMethod: text("integrity_check_method"),
+  integrityVerified: boolean("integrity_verified").default(false),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// CONTRADICTION TRACKING - Conflicting-fact resolution engine
+export const contradictionTracking = pgTable("contradiction_tracking", {
+  id: serial("id").primaryKey(),
+  contradictionId: text("contradiction_id").notNull().unique(),
+  conflictType: text("conflict_type").notNull(),
+  winningFact: integer("winning_fact").references(() => atomicFacts.id),
+  resolutionMethod: text("resolution_method"),
+  resolutionDate: timestamp("resolution_date"),
+  impactOnCase: text("impact_on_case"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// AUDIT TRAIL - Every CRUD / read against the system
+export const auditTrail = pgTable("audit_trail", {
+  id: serial("id").primaryKey(),
+  actionId: integer("action_id").notNull().unique(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  user: integer("user").references(() => users.id),
+  actionType: text("action_type").notNull(),
+  targetArtifact: integer("target_artifact").references(() => masterEvidence.id),
+  ipAddress: text("ip_address"),
+  sessionId: text("session_id"),
+  successFailure: text("success_failure").default("Success"),
+  details: text("details"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Legacy audit logs for compatibility
 export const audit_logs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
@@ -180,6 +264,34 @@ export const insertAuditSchema = createInsertSchema(audit_logs).omit({
   createdAt: true,
 });
 
+// Evidence Ledger schemas
+export const insertMasterEvidenceSchema = createInsertSchema(masterEvidence).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAtomicFactSchema = createInsertSchema(atomicFacts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChainOfCustodySchema = createInsertSchema(chainOfCustodyLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertContradictionSchema = createInsertSchema(contradictionTracking).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAuditTrailSchema = createInsertSchema(auditTrail).omit({
+  id: true,
+  createdAt: true,
+  timestamp: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -211,6 +323,22 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
 export type AuditLog = typeof audit_logs.$inferSelect;
 export type InsertAudit = z.infer<typeof insertAuditSchema>;
+
+// Evidence Ledger types
+export type MasterEvidence = typeof masterEvidence.$inferSelect;
+export type InsertMasterEvidence = z.infer<typeof insertMasterEvidenceSchema>;
+
+export type AtomicFact = typeof atomicFacts.$inferSelect;
+export type InsertAtomicFact = z.infer<typeof insertAtomicFactSchema>;
+
+export type ChainOfCustody = typeof chainOfCustodyLog.$inferSelect;
+export type InsertChainOfCustody = z.infer<typeof insertChainOfCustodySchema>;
+
+export type ContradictionTracking = typeof contradictionTracking.$inferSelect;
+export type InsertContradictionTracking = z.infer<typeof insertContradictionSchema>;
+
+export type AuditTrail = typeof auditTrail.$inferSelect;
+export type InsertAuditTrail = z.infer<typeof insertAuditTrailSchema>;
 
 // Approval requests tables
 export const approvalRequests = pgTable("approval_requests", {

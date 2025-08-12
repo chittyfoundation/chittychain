@@ -140,6 +140,13 @@ Changelog:
 - August 6, 2025. Integrated ChittyBeacon app tracking system from @chittycorp/app-beacon repository with full platform detection
 - August 6, 2025. Built comprehensive app tracking dashboard with real-time beacon monitoring and platform distribution analytics
 - August 6, 2025. Added complete ChittyBeacon service with startup/heartbeat/shutdown tracking across Replit, GitHub, Vercel, and other platforms
+- August 12, 2025. Successfully migrated ChittyChain to use Neon PostgreSQL database instead of in-memory storage
+- August 12, 2025. Configured external access (0.0.0.0 binding) for non-localhost deployment with Replit domains
+- August 12, 2025. Implemented complete NeonStorage class with Drizzle ORM integration for all ChittyChain entities
+- August 12, 2025. Connected ChittyChain to user's own Neon database at chain.chitty.cc (replacing Replit-provided PostgreSQL)
+- August 12, 2025. Verified database connection and schema deployment to custom Neon instance with PostgreSQL 16.9
+- August 12, 2025. Implemented comprehensive Evidence Ledger schema with 7 core data types (Master Evidence, Atomic Facts, Chain of Custody, Contradiction Tracking, Audit Trail, Users, Cases)
+- August 12, 2025. Deployed complete blockchain-based legal evidence management system with Illinois Cook County compliance and cryptographic verification
 ```
 
 ## User Preferences

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage.js";
+import { neonStorage as storage } from "./neon-storage.js";
 import chittyIdRoutes from "./routes/chittyid.js";
 import beaconRoutes from "./routes/beacon.js";
 import { chittyBeacon } from "./services/ChittyBeaconService.js";

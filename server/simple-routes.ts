@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from 'express';
 import { createServer, type Server } from 'http';
 import { WebSocketServer } from 'ws';
-import { storage } from './storage';
+import { neonStorage as storage } from './neon-storage.js';
 import { approvalsRouter } from './routes/approvals';
 import path from 'path';
 import { fileURLToPath } from 'url';

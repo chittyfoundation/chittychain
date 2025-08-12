@@ -8,8 +8,9 @@ if (process.env.NODE_ENV === 'development') {
   neonConfig.useSecureWebSocket = false;
 }
 
-// Create connection pool
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Create connection pool - prioritize NEON_DATABASE_URL for custom Neon database
+const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
 
 // Create drizzle instance
 export const db = drizzle(pool, { schema });
