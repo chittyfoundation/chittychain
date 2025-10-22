@@ -50,7 +50,7 @@ export class EvidenceService {
       
       // Create evidence record
       const evidenceRecord: EvidenceRecord = {
-        id: await mintChittyID("EVNT", "default"),
+        id: crypto.randomUUID(),
         hash: evidenceHash,
         caseId,
         documentType,

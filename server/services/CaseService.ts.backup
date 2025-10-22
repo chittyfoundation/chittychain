@@ -96,7 +96,7 @@ export class CaseService {
       }
 
       const legalCase: LegalCase = {
-        id: await mintChittyID("EVNT", "default"),
+        id: crypto.randomUUID(),
         caseNumber: caseData.caseNumber,
         jurisdiction: caseData.jurisdiction,
         status: 'active',
@@ -221,7 +221,7 @@ export class CaseService {
       }
 
       const newDocument: CaseDocument = {
-        id: await mintChittyID("EVNT", "default"),
+        id: crypto.randomUUID(),
         ...document,
         filedDate: new Date(),
         status: 'draft',

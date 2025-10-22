@@ -230,7 +230,7 @@ export class MemStorage implements IStorage {
   }
 
   async createEvidence(evidence: InsertEvidence): Promise<EvidenceRecord> {
-    const id = await mintChittyID("EVNT", "default");
+    const id = crypto.randomUUID();
     const fullEvidence: EvidenceRecord = {
       ...evidence,
       id,
@@ -262,7 +262,7 @@ export class MemStorage implements IStorage {
   }
 
   async createCase(legalCase: InsertCase): Promise<LegalCase> {
-    const id = await mintChittyID("EVNT", "default");
+    const id = crypto.randomUUID();
     const fullCase: LegalCase = {
       ...legalCase,
       id,

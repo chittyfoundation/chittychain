@@ -191,7 +191,7 @@ export class AIRGovernance extends EventEmitter {
 
   // Spawn a "tea" (sub-agent team) for specific tasks
   async spawnTea(purpose: string, taskList: string[], ttlHours: number = 24): Promise<TeaSpawn> {
-    const teamId = `tea-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const teamId = `tea-${Date.now()}`;
     
     const tea: TeaSpawn = {
       id: teamId,

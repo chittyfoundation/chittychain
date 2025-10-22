@@ -200,7 +200,7 @@ export class CookCountyAPIService {
     
     return {
       success: true,
-      filingId: await mintChittyID("EVNT", "default"),
+      filingId: crypto.randomUUID(),
       confirmationNumber,
       message: `Filing submitted successfully. Confirmation: ${confirmationNumber}`
     };
