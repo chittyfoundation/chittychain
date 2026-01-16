@@ -1,0 +1,20 @@
+name: ChittyConnect Sync
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+env:
+  CHITTYCONNECT_ENDPOINT: https://connect.chitty.cc
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync to ChittyConnect
+        run: |
+          curl -X POST "${{ env.CHITTYCONNECT_ENDPOINT }}/api/github/sync" \
+            -H "Authorization: Bearer ${{ secrets.CHITTYCONNECT_SERVICE_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"repository":"${{ github.repository }}","commit":"${{ github.sha }}"}' || true
