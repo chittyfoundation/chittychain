@@ -47,10 +47,12 @@ Soft-Mint (ChittyLedger)     Hard-Mint (ChittyChain)
 
 ## Three Aspects (TY VY RY)
 
+Source: `chittycanon://gov/governance#three-aspects`
+
 | Aspect | Abbrev | Answer |
 |--------|--------|--------|
 | **Identity** | TY | On-chain anchor layer — immutable finality for governance, attribution, evidence |
-| **Connectivity** | VY | Receives Soft-Mint from ChittyLedger; smart contracts; API + WebSocket real-time |
+| **Connectivity** | VY | Receives Soft-Mint from ChittyLedger; smart contracts for property NFTs; API + WebSocket real-time |
 | **Authority** | RY | Tier 0 — final immutable record; once anchored, cannot be modified |
 
 ## ChittyOS Ecosystem
@@ -81,7 +83,7 @@ Soft-Mint (ChittyLedger)     Hard-Mint (ChittyChain)
 | `/health` | GET | No | Health check |
 | `/api/v1/anchor` | POST | Yes | Anchor record on-chain |
 | `/api/v1/verify/:hash` | GET | No | Verify on-chain record |
-| `/api/v1/contracts` | GET | Yes | List smart contracts |
+| `/api/v1/contracts` | GET | Yes | List deployed smart contracts |
 | `/api/v1/transactions` | GET | Yes | Query transaction history |
 
 ## Document Triad

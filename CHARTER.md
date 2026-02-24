@@ -20,7 +20,7 @@ visibility: PUBLIC
 
 ## Mission
 
-ChittyChain is the **on-chain anchor layer** for the ChittyOS ecosystem. It provides immutable finality for governance decisions, attribution traces, and evidence records. While ChittyLedger is the fast off-chain database layer, ChittyChain is the permanent on-chain record of truth. Referenced in the Foundation Charter as a core scope service.
+ChittyChain is the **on-chain anchor layer** for the ChittyOS ecosystem. It provides immutable finality for governance decisions, attribution traces, and evidence records. While ChittyLedger is the fast off-chain database layer, ChittyChain is the permanent on-chain record of truth. Referenced in the Foundation Charter (Section 2) as a core scope service.
 
 ## Scope
 
@@ -63,13 +63,13 @@ Source: `chittycanon://gov/governance#three-aspects`
 **Base URL**: https://chain.chitty.cc
 
 ### Core Endpoints
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/health` | GET | Health check |
-| `/api/v1/anchor` | POST | Anchor record on-chain (Hard-Mint) |
-| `/api/v1/verify/:hash` | GET | Verify on-chain record |
-| `/api/v1/contracts` | GET | List deployed smart contracts |
-| `/api/v1/transactions` | GET | Query transaction history |
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/health` | GET | No | Health check |
+| `/api/v1/anchor` | POST | Yes | Anchor record on-chain (Hard-Mint) |
+| `/api/v1/verify/:hash` | GET | No | Verify on-chain record |
+| `/api/v1/contracts` | GET | Yes | List deployed smart contracts |
+| `/api/v1/transactions` | GET | Yes | Query transaction history |
 
 ## Dual Immutability
 
