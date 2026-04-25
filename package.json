@@ -141,5 +141,6 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
-  }
+  },
+  "description": "ChittyChain — on-chain Hard-Mint anchor with Solidity smart contracts for immutable proofs"
 }
