@@ -1,20 +1,24 @@
 name: ChittyConnect Sync
+
+# Thin caller. The implementation lives in CHITTYOS/chittyops, which is the
+# established home for shared workflows here.
+#
+# What this replaced ended its curl with `|| true`, so every run reported
+# success while POST connect.chitty.cc/api/github/sync returned 401 and synced
+# nothing. The reusable version fails loudly on a real error, and exits 0 with
+# a warning annotation when the credential is simply not provisioned.
+
 on:
   push:
     branches: [main, master]
   schedule:
     - cron: "0 */6 * * *"
   workflow_dispatch:
-env:
-  CHITTYCONNECT_ENDPOINT: https://connect.chitty.cc
+
 jobs:
   sync:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Sync to ChittyConnect
-        run: |
-          curl -X POST "${{ env.CHITTYCONNECT_ENDPOINT }}/api/github/sync" \
-            -H "Authorization: Bearer ${{ secrets.CHITTYCONNECT_SERVICE_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"repository":"${{ github.repository }}","commit":"${{ github.sha }}"}' || true
+    uses: CHITTYOS/chittyops/.github/workflows/reusable-chittyconnect-sync.yml@main
+    # Explicit, NOT `secrets: inherit`. Inherit hands the called workflow every
+    # secret this repository holds; it needs exactly one.
+    secrets:
+      CHITTYCONNECT_API_KEY: ${{ secrets.CHITTYCONNECT_API_KEY }}
